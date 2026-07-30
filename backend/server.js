@@ -5,7 +5,9 @@ const { createClient } = require('@supabase/supabase-js');
 
 // 1. Khởi tạo Máy chủ và kết nối Database
 const app = express();
-app.use(cors()); // Cho phép Frontend gọi tới
+app.use(cors({
+    origin: "https://qr-pro-bay.vercel.app"
+}));// Cho phép Frontend gọi tới
 app.use(express.json()); // Giúp máy chủ đọc được dữ liệu dạng JSON
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -55,7 +57,10 @@ app.post('/api/shorten', async (req, res) => {
         if (updateError) throw updateError;
 
         // Trả kết quả về cho Giao diện
-        const shortUrl = `https://tasty-dogs-jump.loca.lt/${shortCode}`;
+        const BASE_URL = process.env.BASE_URL;
+
+        const shortUrl = `${BASE_URL}/${shortCode}`;
+
         res.json({ success: true, short_url: shortUrl, short_code: shortCode });
 
     } catch (error) {
@@ -100,5 +105,5 @@ app.get('/:shortCode', async (req, res) => {
 });
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Máy chủ Backend đang chạy tít mù tại: http://localhost:${PORT}`);
+    console.log(`🚀 Backend running on port: http://localhost:${PORT}`);
 });

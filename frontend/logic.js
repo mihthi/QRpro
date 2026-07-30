@@ -23,7 +23,9 @@ async function generateShortLink() {
 
     try {
         // Gửi "Order" (đường link) xuống cho máy chủ đang chạy ở cổng 3000
-        const response = await fetch('http://localhost:3000/api/shorten', {
+        const API_URL = "https://qrpro-luev.onrender.com";
+
+        const response = await fetch(`${API_URL}/api/shorten`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
