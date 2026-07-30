@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công cụ Rút gọn Link & QR Code Vĩnh Viễn</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Thêm thư viện Icon Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- TOPBAR & HEADER (Giữ nguyên như cũ) -->
+    <div class="topbar">
+        <div class="topbar-content">
+            <span>📧 info@qrpro.vn</span>
+            <span>📞 (037) 3136 776 - Hỗ trợ 24/7</span>
+        </div>
+    </div>
+    <header class="main-header">
+        <div class="logo">QR <span style="color: var(--primary-green);">PRO</span></div>
+        <nav class="nav-links">
+            <a href="#" style="color: var(--accent-pink);">Trang chủ</a>
+            <a href="#tool-section">Công cụ</a>
+        </nav>
+        <button class="btn-login">ĐĂNG NHẬP</button>
+    </header>
+
+    <!-- HERO BANNER -->
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Mã QR Vĩnh Viễn Cho Doanh Nghiệp</h1>
+            <p>Tạo mã QR và Rút gọn link không giới hạn thời gian. Quản lý 100% dữ liệu của bạn, không lo hết hạn.</p>
+        </div>
+    </section>
+
+    <!-- PHẦN CÔNG CỤ CHÍNH -->
+    <section id="tool-section" class="tool-container">
+        <div class="tool-box">
+
+            <!-- TAB CẤP 1: Tách biệt Rút gọn Link và Tạo QR -->
+            <div class="main-tabs">
+                <div class="main-tab active" id="tab-rutgon" onclick="switchMainTab('rutgon')">
+                    <i class="fa-solid fa-scissors" style="margin-right: 5px;"></i> RÚT GỌN LINK
+                </div>
+                <div class="main-tab" id="tab-taomat" onclick="switchMainTab('taomat')">
+                    <i class="fa-solid fa-qrcode" style="margin-right: 5px;"></i> TẠO MÃ QR
+                </div>
+            </div>
+
+            <!-- NỘI DUNG: RÚT GỌN LINK -->
+            <div id="content-rutgon" class="main-content">
+                <h3 style="margin-bottom: 15px; color: var(--text-dark);">Công cụ Rút gọn Link</h3>
+                <div class="input-group">
+                    <label>Nhập đường link dài cần rút gọn:</label>
+                    <input type="text" id="shorten-input" placeholder="Ví dụ: https://facebook.com/..." required>
+                </div>
+                <button class="btn-submit" onclick="generateShortLink()">RÚT GỌN NGAY</button>
+            </div>
+
+            <!-- NỘI DUNG: TẠO MÃ QR -->
+            <div id="content-taomat" class="main-content" style="display: none;">
+
+                <!-- TAB CẤP 2: Các loại QR (Giống ảnh ME-QR) -->
+                <div class="qr-type-grid">
+                    <div class="qr-type-item active" id="qr-tab-link" onclick="switchQRTab('link')">
+                        <i class="fa-solid fa-link icon"></i><br>Liên kết / URL
+                    </div>
+                    <div class="qr-type-item" id="qr-tab-text" onclick="switchQRTab('text')">
+                        <i class="fa-solid fa-align-left icon"></i><br>Văn bản
+                    </div>
+                    <div class="qr-type-item" id="qr-tab-wifi" onclick="switchQRTab('wifi')">
+                        <i class="fa-solid fa-wifi icon"></i><br>Wi-Fi
+                    </div>
+                    <div class="qr-type-item" id="qr-tab-location" onclick="switchQRTab('location')">
+                        <i class="fa-solid fa-location-dot icon"></i><br>Địa điểm
+                    </div>
+                    <div class="qr-type-item" id="qr-tab-file" onclick="switchQRTab('file')">
+                        <i class="fa-solid fa-cloud-arrow-up icon"></i><br>Hình ảnh/PDF
+                    </div>
+                </div>
+
+                <!-- Các Form Nhập liệu tương ứng cho từng loại QR -->
+                <div id="qr-form-link" class="qr-form-content">
+                    <div class="input-group">
+                        <label>Đường link (URL):</label>
+                        <input type="url" id="qr-input-link" placeholder="Nhập đường link web...">
+                    </div>
+                </div>
+
+                <div id="qr-form-text" class="qr-form-content" style="display: none;">
+                    <div class="input-group">
+                        <label>Đoạn văn bản:</label>
+                        <textarea id="qr-input-text" rows="4" placeholder="Nhập nội dung văn bản..."
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #ddd;"></textarea>
+                    </div>
+                </div>
+
+                <div id="qr-form-wifi" class="qr-form-content" style="display: none;">
+                    <div class="input-group">
+                        <label>Tên mạng (SSID):</label>
+                        <input type="text" id="qr-input-wifi-name" placeholder="Tên Wi-Fi">
+                    </div>
+                    <div class="input-group">
+                        <label>Mật khẩu:</label>
+                        <input type="text" id="qr-input-wifi-pass" placeholder="Mật khẩu Wi-Fi">
+                    </div>
+                </div>
+
+                <div id="qr-form-file" class="qr-form-content" style="display: none;">
+                    <div class="input-group">
+                        <label>Tải File lên (Tối đa 5MB):</label>
+                        <input type="file" id="qr-input-file" accept="image/*,.pdf">
+                    </div>
+                    <div class="fingerprint-info">
+                        Mã thiết bị: <span id="fp-display" class="highlight-text">Đang tải...</span>
+                    </div>
+                </div>
+                <div id="qr-form-location" class="qr-form-content" style="display: none;">
+                    <div class="location-container">
+                        <!-- Cột trái: Nhập liệu -->
+                        <div class="location-input-side">
+                            <div class="input-group">
+                                <label>Nhập địa chỉ để tìm kiếm:</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="text" id="qr-input-location"
+                                        placeholder="Ví dụ: Dinh Độc Lập, Quận 1...">
+                                    <button class="btn-search-map" onclick="searchLocation()" type="button">Tìm</button>
+                                </div>
+                            </div>
+                            <p style="font-size: 13px; color: #666; margin-top: 10px;">
+                                💡 <b>Mẹo:</b> Bạn có thể bấm trực tiếp lên bản đồ để chọn vị trí chính xác!
+                            </p>
+                        </div>
+
+                        <!-- Cột phải: Hiển thị Bản đồ -->
+                        <div class="location-map-side">
+                            <div id="map-preview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-submit" onclick="generateQRCode()">TẠO MÃ QR</button>
+            </div>
+
+            <!-- Khu vực Hiển thị Kết quả Chung -->
+            <div class="result-box" id="result-box">
+                <h3>🎉 Thành công!</h3>
+                <p id="result-text" class="result-link"></p>
+                <div id="qr-render" class="qr-code-wrapper"></div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Tách làm 2 file JS để dễ quản lý -->
+    <script src="ui.js"></script>
+    <script src="logic.js"></script>
+</body>
+
+</html>
