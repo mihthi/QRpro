@@ -19,7 +19,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const upload = multer({
     storage: multer.memoryStorage(), // Giữ file trong RAM tạm thời để đẩy lên S3
     limits: {
-        files: 10,                  // Giới hạn tối đa: 10 file trong 1 lần tải
+        files: 3,                  // Giới hạn tối đa: 10 file trong 1 lần tải
         fileSize: 5 * 1024 * 1024   // Giới hạn dung lượng: 5MB mỗi file (Tính bằng Byte: 5 * 1024 * 1024)
     },
     // (Tùy chọn) Bộ lọc chỉ cho phép ảnh hoặc PDF
@@ -75,14 +75,46 @@ function generateShortCode(length = 6) {
     }
     return result;
 }
+// --- HÀM BẢO VỆ: ĐẾM LƯỢT TRONG NGÀY ---
+async function checkRateLimit(fingerprint) {
+    if (!fingerprint) return true; // Nếu lỗi không có vân tay thì tạm cho qua
+    
+    // Lấy ngày hôm nay (Ví dụ: 2026-07-31)
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Yêu cầu Supabase đếm số dòng của vân tay này trong ngày hôm nay
+    const { count, error } = await supabase
+        .from('links')
+        .select('*', { count: 'exact', head: true })
+        .eq('fingerprint', fingerprint)
+        .gte('created_at', today);
+        
+    return count < 3; // Nếu nhỏ hơn 10 thì trả về true (Cho phép đi tiếp)
+}
 
 // 3. API 1: Xử lý yêu cầu RÚT GỌN LINK có hỗ trợ tên tùy chỉnh (Custom Alias)
-// API 2: Xử lý Upload File (Hình ảnh / PDF) lên Amazon S3
-// API 2: Upload MẢNG File lên S3 & Tạo Album
-app.post('/api/upload', upload.array('files', 10), async (req, res) => {
+// API 2: Upload MẢNG File lên S3 & Tạo Album (Đã tích hợp chặn 10 lượt/ngày)
+app.post('/api/upload', upload.array('files', 3), async (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'Vui lòng chọn ít nhất 1 file!' });
     }
+
+    const fingerprint = req.body.fingerprint;
+
+    // --- KIỂM TRA GIỚI HẠN 10 LƯỢT/NGÀY ---
+    if (fingerprint) {
+        const today = new Date().toISOString().split('T')[0];
+        const { count, error: countError } = await supabase
+            .from('links')
+            .select('*', { count: 'exact', head: true })
+            .eq('fingerprint', fingerprint)
+            .gte('created_at', today);
+
+        if (count >= 3) {
+            return res.status(403).json({ error: "Hôm nay bạn đã tạo tối đa 3 mã/link. Hãy quay lại vào ngày mai nhé!" });
+        }
+    }
+    // ---------------------------------------
 
     try {
         const bucketName = process.env.AWS_BUCKET_NAME;
@@ -96,7 +128,6 @@ app.post('/api/upload', upload.array('files', 10), async (req, res) => {
                 Key: fileName,
                 Body: file.buffer,
                 ContentType: file.mimetype
-                // Đã xóa ACL: public-read để không dính lỗi 500
             };
             
             return s3Client.send(new PutObjectCommand(uploadParams)).then(() => {
@@ -107,14 +138,15 @@ app.post('/api/upload', upload.array('files', 10), async (req, res) => {
         // Chờ tất cả file tải xong và lấy danh sách link AWS
         const fileUrls = await Promise.all(uploadPromises);
         
-        // Rút gọn link và đánh dấu nó là 'album'
+        // Rút gọn link, đánh dấu loại 'album' và LƯU LẠI FINGERPRINT
         const shortCode = generateShortCode(); 
         const { error: insertError } = await supabase
             .from('links')
             .insert([{ 
                 original_url: JSON.stringify(fileUrls), // Lưu nguyên mảng vào Database
                 short_code: shortCode, 
-                link_type: 'album' 
+                link_type: 'album',
+                fingerprint: fingerprint // Lưu mã vân tay thiết bị vào bảng
             }]);
 
         if (insertError) throw insertError;
@@ -178,13 +210,25 @@ app.get('/:shortCode', async (req, res) => {
                     <div class="gallery">
             `;
             
-            urls.forEach(url => {
-                if(url.toLowerCase().endsWith('.pdf')) {
-                    htmlGallery += `<a href="${url}" target="_blank" class="pdf-btn">📄 Mở xem File PDF</a>`;
-                } else {
-                    htmlGallery += `<img src="${url}" loading="lazy" />`;
-                }
-            });
+        urls.forEach(url => {
+                        // Tách lấy tên file gốc từ URL của Amazon S3 (Ví dụ: 17854735_ten_file.pdf -> ten_file.pdf)
+                        const fullFileName = decodeURIComponent(url.split('/').pop());
+                        // Xóa bỏ dãy số timestamp ở đầu tên file (nếu có dạng số_tênfile)
+                        const displayName = fullFileName.replace(/^\d+_,?/, '');
+
+                        if(url.toLowerCase().endsWith('.pdf') || url.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx)$/)) {
+                            // Hiển thị tên file thay vì viết cứng chữ "Mở xem File PDF"
+                            htmlGallery += `<a href="${url}" target="_blank" class="pdf-btn">📄 Tải/Xem: ${displayName}</a>`;
+                        } else {
+                            // Nếu là ảnh thì vẫn hiện ảnh, nhưng thêm thẻ tên phía dưới cho chuyên nghiệp
+                            htmlGallery += `
+                                <div style="margin-bottom: 10px; width: 100%;">
+                                    <img src="${url}" loading="lazy" style="width: 100%;" />
+                                    <p style="font-size: 13px; color: #4b5563; margin-top: 4px;">${displayName}</p>
+                                </div>
+                            `;
+                        }
+                    });
 
             htmlGallery += `</div></body></html>`;
             return res.send(htmlGallery);
