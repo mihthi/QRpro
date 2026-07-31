@@ -123,6 +123,7 @@ app.post('/api/upload', upload.array('files', 3), async (req, res) => {
         // Dùng vòng lặp tải toàn bộ mảng lên S3
         const uploadPromises = req.files.map(file => {
             const fileName = `${Date.now()}_${file.originalname.replace(/\s/g, '_')}`;
+            console.log(file.originalname);
             const uploadParams = {
                 Bucket: bucketName,
                 Key: fileName,
@@ -214,8 +215,16 @@ app.get('/:shortCode', async (req, res) => {
                             try {
                                 // Giải mã chuẩn tiếng Việt để không bị lỗi ký tự lạ
                                 const rawFileName = url.split('/').pop().split('?')[0];
-                                const decodedName = decodeURIComponent(rawFileName);
-                                const displayName = decodedName.replace(/^\d+_,?/, ''); // Xóa chuỗi timestamp ở đầu
+
+                                let displayName = decodeURIComponent(rawFileName);
+
+                                // sửa lỗi UTF8
+                                displayName = Buffer
+                                    .from(displayName, "latin1")
+                                    .toString("utf8");
+
+                                // bỏ timestamp
+                                displayName = displayName.replace(/^\d+_/, "");
 
                                 if (url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)) {
                                     htmlGallery += `

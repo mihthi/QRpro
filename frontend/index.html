@@ -118,8 +118,15 @@
 
                 <div id="qr-form-file" class="qr-form-content" style="display: none;">
                     <div class="input-group">
-                        <label>Tải File lên (Tối đa 5MB):</label>
-                        <input type="file" id="qr-input-file" accept="image/*,.pdf">
+                        <label>Tải File lên (Tối đa 10 file cùng lúc):</label>
+                        <!-- Cho phép nhận mọi định dạng file -->
+                        <input type="file" id="qr-input-file" multiple onchange="handleFileSelect(event)">
+                        onchange="handleFileSelect(event)">
+
+                        <!-- Khu vực hiển thị danh sách file kèm nút xóa -->
+                        <div id="file-list-display"
+                            style="margin-top: 10px; font-size: 14px; color: #374151; background: #f9fafb; padding: 10px; border-radius: 8px; display: none; border: 1px dashed #ccc;">
+                        </div>
                     </div>
                     <div class="fingerprint-info">
                         Mã thiết bị: <span id="fp-display" class="highlight-text">Đang tải...</span>
@@ -160,7 +167,7 @@
 
             <!-- Khu vực Hiển thị Kết quả Chung -->
             <div class="result-box" id="result-box">
-                <h3>🎉 Thành công!</h3>
+                <h3 id="result-title">🎉 Thành công!</h3>
                 <p id="result-text" class="result-link"></p>
                 <div id="qr-render" class="qr-code-wrapper"></div>
             </div>

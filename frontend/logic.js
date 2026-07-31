@@ -23,10 +23,10 @@ async function generateShortLink() {
     const customAliasElement = document.getElementById('custom-alias');
     const customAlias = customAliasElement ? customAliasElement.value.trim() : "";
 
+    // --- XỬ LÝ UPLOAD FILE THẬT ---
     document.getElementById('result-box').style.display = 'block';
-    document.getElementById('result-text').innerText = "⏳ Đang kết nối máy chủ để tạo link...";
-    document.getElementById('qr-render').innerHTML = ""; 
-
+    document.getElementById('result-title').innerText = "⏳ Đang xử lý..."; // Đổi tiêu đề thành Đang xử lý
+    document.getElementById('result-text').innerText = "Đang tải file lên máy chủ (Vui lòng chờ)...";
     try {
         const response = await fetch(`${API_URL}/api/shorten`, {
             method: 'POST',
@@ -34,7 +34,8 @@ async function generateShortLink() {
             body: JSON.stringify({
                 original_url: link,
                 link_type: 'link',
-                custom_alias: customAlias
+                custom_alias: customAlias,
+                fingerprint: deviceFingerprint
             })
         });
 
@@ -81,42 +82,41 @@ async function generateQRCode() {
         finalDataToQR = `https://maps.google.com/?q=${selectedLat},${selectedLng}`;
     }
     else if (currentQRType === 'file') {
-        const fileInput = document.getElementById('qr-input-file');
-        if (fileInput.files.length === 0) return alert("Vui lòng chọn 1 file!");
+        if (selectedFiles.length === 0) return showCustomAlert("Vui lòng chọn ít nhất 1 file!");
+        if (selectedFiles.length > 10) return showCustomAlert("Chỉ được tải lên tối đa 10 file cùng lúc!");
         
-        if (fileInput.files[0].size > 5 * 1024 * 1024) {
-            return alert("File vượt quá 5MB. Vui lòng chọn file nhẹ hơn!");
-        }
-        
-        // --- XỬ LÝ UPLOAD FILE THẬT ---
         document.getElementById('result-box').style.display = 'block';
-        document.getElementById('result-text').innerText = "⏳ Đang tải file lên máy chủ...";
+        document.getElementById('result-title').innerText = "⏳ Đang xử lý...";
+        document.getElementById('result-title').style.color = "#374151";
+        document.getElementById('result-text').innerText = "Đang tải file lên máy chủ (Vui lòng chờ)...";
         
         const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
+        // Đưa các file từ mảng selectedFiles vào gói hàng gửi đi
+        for (let i = 0; i < selectedFiles.length; i++) {
+            formData.append('files', selectedFiles[i]);
+        }
+        formData.append('fingerprint', deviceFingerprint);
 
         try {
             const response = await fetch(`${API_URL}/api/upload`, {
                 method: 'POST',
                 body: formData 
-                // Không set header Content-Type, trình duyệt tự xử lý cho FormData
             });
-            
             const data = await response.json();
             
             if (data.success) {
-                finalDataToQR = data.short_url;
-                showResult(`🎉 File đã được tải lên và rút gọn!<br><br> <a href="${finalDataToQR}" target="_blank" style="font-size: 18px;">${finalDataToQR}</a>`, finalDataToQR);
+                const finalDataToQR = data.short_url;
+                showResult(`🎉 Bộ sưu tập file đã được tải lên thành công!<br><br> <a href="${finalDataToQR}" target="_blank" style="font-size: 18px;">${finalDataToQR}</a>`, finalDataToQR);
             } else {
-                alert("Lỗi tải file: " + data.error);
+                showCustomAlert(data.error);
                 document.getElementById('result-box').style.display = 'none';
             }
         } catch (error) {
             console.error(error);
-            alert("Lỗi kết nối khi tải file lên!");
+            showCustomAlert("Lỗi kết nối khi tải file lên!");
             document.getElementById('result-box').style.display = 'none';
         }
-        return; // Dừng hàm lại vì showResult đã được gọi thành công ở trên
+        return; 
     }
 
     // Vẽ QR cho các trường hợp không phải File
@@ -128,6 +128,7 @@ async function generateQRCode() {
 // 4. Hàm hỗ trợ: In kết quả ra màn hình
 function showResult(messageText, qrData) {
     document.getElementById('result-box').style.display = 'block';
+    document.getElementById('result-title').innerText = "🎉 Thành công!"; // Trả lại chữ Thành công
     document.getElementById('result-text').innerHTML = messageText;
 
     const qrContainer = document.getElementById('qr-render');
@@ -252,4 +253,84 @@ if (locationInput && suggestionBox) {
             suggestionBox.style.display = 'none';
         }
     });
+}
+// Hàm hiển thị danh sách tên file ngay khi người dùng bôi đen chọn
+function updateFileList() {
+    const fileInput = document.getElementById('qr-input-file');
+    const displayArea = document.getElementById('file-list-display');
+    
+    // Nếu chưa chọn file nào thì giấu khung hiển thị đi
+    if (!fileInput || fileInput.files.length === 0) {
+        displayArea.style.display = 'none';
+        return;
+    }
+
+    // Nếu có chọn file thì hiện khung lên và vẽ danh sách
+    displayArea.style.display = 'block';
+    let html = '<strong>📁 Các file bạn đã chọn:</strong><ul style="margin: 8px 0 0 0; padding-left: 20px; line-height: 1.6;">';
+    
+    for (let i = 0; i < fileInput.files.length; i++) {
+        html += `<li style="color: #059669;">${fileInput.files[i].name}</li>`;
+    }
+    
+    html += '</ul>';
+    displayArea.innerHTML = html;
+}
+
+// Biến toàn cục lưu danh sách file người dùng đã chọn
+let selectedFiles = [];
+
+// 1. Khi người dùng chọn file từ máy tính
+function handleFileSelect(event) {
+    const files = event.target.files;
+    for (let i = 0; i < files.length; i++) {
+        // Kiểm tra dung lượng tối đa 5MB mỗi file
+        if (files[i].size > 5 * 1024 * 1024) {
+            showCustomAlert(`File "${files[i].name}" vượt quá 5MB. Vui lòng chọn file nhẹ hơn!`);
+            continue;
+        }
+        selectedFiles.push(files[i]);
+    }
+    renderFileList();
+}
+
+// 2. Vẽ danh sách file ra màn hình kèm nút Xóa (dấu x)
+function renderFileList() {
+    const displayArea = document.getElementById('file-list-display');
+    
+    if (selectedFiles.length === 0) {
+        displayArea.style.display = 'none';
+        displayArea.innerHTML = '';
+        // Reset lại input file để có thể chọn lại file cũ nếu muốn
+        document.getElementById('qr-input-file').value = '';
+        return;
+    }
+
+    displayArea.style.display = 'block';
+    let html = '<strong style="display:block; margin-bottom:5px;">📁 Các file đã chọn:</strong><ul style="margin: 0; padding-left: 20px; line-height: 1.8;">';
+    
+    selectedFiles.forEach((file, index) => {
+        html += `<li style="color: #059669; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px;" title="${file.name}">${file.name}</span>
+            <button type="button" onclick="removeFile(${index})" style="background: #fee2e2; color: #dc2626; border: none; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 12px; font-weight: bold;">Xóa</button>
+        </li>`;
+    });
+    
+    html += '</ul>';
+    displayArea.innerHTML = html;
+}
+
+// 3. Hàm xóa file khi bấm nút Xóa
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    renderFileList();
+}
+
+// 4. Hàm thay thế Alert mặc định thành thông báo đẹp (Modal nhỏ hoặc đổi text kết quả)
+function showCustomAlert(message) {
+    document.getElementById('result-box').style.display = 'block';
+    document.getElementById('result-title').innerText = "⚠️ Chú ý!";
+    document.getElementById('result-title').style.color = "#dc2626";
+    document.getElementById('result-text').innerHTML = `<span style="color: #dc2626; font-weight: bold;">${message}</span>`;
+    document.getElementById('qr-render').innerHTML = "";
 }
