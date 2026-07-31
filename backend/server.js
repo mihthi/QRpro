@@ -20,16 +20,16 @@ const upload = multer({
     storage: multer.memoryStorage(), // Giữ file trong RAM tạm thời để đẩy lên S3
     limits: {
         files: 3,                  // Giới hạn tối đa: 10 file trong 1 lần tải
-        fileSize: 5 * 1024 * 1024   // Giới hạn dung lượng: 5MB mỗi file (Tính bằng Byte: 5 * 1024 * 1024)
+        fileSize: 10 * 1024 * 1024   // Giới hạn dung lượng: 10MB mỗi file (Tính bằng Byte: 5 * 1024 * 1024)
     },
     // (Tùy chọn) Bộ lọc chỉ cho phép ảnh hoặc PDF
-    fileFilter: function (req, file, cb) {
-        if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
-            cb(null, true);
-        } else {
-            cb(new Error('Chỉ chấp nhận file hình ảnh hoặc PDF!'));
-        }
-    }
+    // fileFilter: function (req, file, cb) {
+    //     if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf') {
+    //         cb(null, true);
+    //     } else {
+    //         cb(new Error('Chỉ chấp nhận file hình ảnh hoặc PDF!'));
+    //     }
+    // }
 });
 
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -210,25 +210,28 @@ app.get('/:shortCode', async (req, res) => {
                     <div class="gallery">
             `;
             
-        urls.forEach(url => {
-                        // Tách lấy tên file gốc từ URL của Amazon S3 (Ví dụ: 17854735_ten_file.pdf -> ten_file.pdf)
-                        const fullFileName = decodeURIComponent(url.split('/').pop());
-                        // Xóa bỏ dãy số timestamp ở đầu tên file (nếu có dạng số_tênfile)
-                        const displayName = fullFileName.replace(/^\d+_,?/, '');
+            urls.forEach(url => {
+                            try {
+                                // Giải mã chuẩn tiếng Việt để không bị lỗi ký tự lạ
+                                const rawFileName = url.split('/').pop().split('?')[0];
+                                const decodedName = decodeURIComponent(rawFileName);
+                                const displayName = decodedName.replace(/^\d+_,?/, ''); // Xóa chuỗi timestamp ở đầu
 
-                        if(url.toLowerCase().endsWith('.pdf') || url.toLowerCase().match(/\.(pdf|doc|docx|xls|xlsx)$/)) {
-                            // Hiển thị tên file thay vì viết cứng chữ "Mở xem File PDF"
-                            htmlGallery += `<a href="${url}" target="_blank" class="pdf-btn">📄 Tải/Xem: ${displayName}</a>`;
-                        } else {
-                            // Nếu là ảnh thì vẫn hiện ảnh, nhưng thêm thẻ tên phía dưới cho chuyên nghiệp
-                            htmlGallery += `
-                                <div style="margin-bottom: 10px; width: 100%;">
-                                    <img src="${url}" loading="lazy" style="width: 100%;" />
-                                    <p style="font-size: 13px; color: #4b5563; margin-top: 4px;">${displayName}</p>
-                                </div>
-                            `;
-                        }
-                    });
+                                if (url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+                                    htmlGallery += `
+                                        <div style="margin-bottom: 10px; width: 100%;">
+                                            <img src="${url}" loading="lazy" style="width: 100%; border-radius: 12px;" />
+                                            <p style="font-size: 14px; color: #374151; font-weight: bold; margin-top: 6px;">${displayName}</p>
+                                        </div>
+                                    `;
+                                } else {
+                                    // Chỉ hiển thị đúng tên file gọn gàng, không có chữ thừa
+                                    htmlGallery += `<a href="${url}" target="_blank" class="file-btn">📎 ${displayName}</a>`;
+                                }
+                            } catch (e) {
+                                htmlGallery += `<a href="${url}" target="_blank" class="file-btn">📎 Tải xuống file</a>`;
+                            }
+                        });
 
             htmlGallery += `</div></body></html>`;
             return res.send(htmlGallery);
