@@ -175,6 +175,28 @@
         </div>
     </section>
 
+    <!-- HỘP THOẠI POPUP ĐĂNG NHẬP ADMIN -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="close-login-btn" class="close-btn">&times;</span>
+            <h2 style="text-align: center; margin-bottom: 20px; color: #374151;">Đăng Nhập Admin</h2>
+            <div class="input-group">
+                <label>Tài khoản:</label>
+                <input type="text" id="admin-user-popup" placeholder="Nhập tài khoản admin..."
+                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            </div>
+            <div class="input-group" style="margin-top: 15px;">
+                <label>Mật khẩu:</label>
+                <input type="password" id="admin-pass-popup" placeholder="Nhập mật khẩu..."
+                    style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            </div>
+            <p id="login-error-popup"
+                style="color: #dc2626; font-size: 14px; text-align: center; margin-top: 10px; display: none;"></p>
+            <button class="btn-submit" onclick="handleLoginPopup()" style="margin-top: 20px; width: 100%;">VÀO TRANG
+                QUẢN TRỊ</button>
+        </div>
+    </div>
+
     <!-- Tách làm 2 file JS để dễ quản lý -->
     <script src="ui.js"></script>
     <script src="logic.js"></script>

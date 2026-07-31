@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - QR Pro</title>
+    <!-- Nhúng thư viện TailwindCSS để tạo layout nhanh -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Liên kết tới file CSS riêng của Admin -->
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-96">
+            <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Đăng Nhập Admin</h2>
+            <div class="space-y-4">
+                <input type="text" id="admin-user" placeholder="Tài khoản" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <input type="password" id="admin-pass" placeholder="Mật khẩu" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button onclick="loginAdmin()" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600 transition">Đăng Nhập</button>
+            </div>
+            <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden"></p>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH DASHBOARD -->
+    <div id="dashboard-screen" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800">⚙️ Quản Trị Hệ Thống</h1>
+            <button onclick="logoutAdmin()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition">Đăng xuất</button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="p-6 max-w-6xl mx-auto">
+            <!-- Tabs -->
+            <div class="flex border-b mb-6">
+                <button onclick="switchTab('link')" id="tab-link" class="tab-btn tab-active px-6 py-3 text-gray-600 hover:text-green-500 focus:outline-none">🔗 Link Rút Gọn</button>
+                <button onclick="switchTab('album')" id="tab-album" class="tab-btn px-6 py-3 text-gray-600 hover:text-green-500 focus:outline-none">📂 Quản Lý File/Album</button>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white rounded-xl shadow overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-700 border-b">
+                            <th class="p-4 font-semibold">Mã ngắn</th>
+                            <th class="p-4 font-semibold">Dữ liệu gốc (URL/Files)</th>
+                            <th class="p-4 font-semibold">Loại</th>
+                            <th class="p-4 font-semibold">Lượt Click</th>
+                            <th class="p-4 font-semibold">Ngày tạo</th>
+                            <th class="p-4 font-semibold text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                        <!-- Dữ liệu sẽ được chèn bằng JS -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Liên kết tới file JS riêng của Admin -->
+    <script src="admin-auth.js"></script>
+    <script src="admin-data.js"></script>git
+</body>
+</html>

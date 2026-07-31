@@ -40,8 +40,79 @@ function switchQRTab(qrType) {
     // Ẩn khung kết quả
     document.getElementById('result-box').style.display = 'none';
 
-    // ----> THÊM 3 DÒNG NÀY VÀO CUỐI HÀM <----
     if (qrType === 'location') {
         initMap();
+    }
+}
+
+// ==========================================
+// KHỐI XỬ LÝ POPUP ĐĂNG NHẬP ADMIN
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnLogin = document.querySelector(".btn-login"); 
+    const loginModal = document.getElementById("login-modal");
+    const closeBtn = document.getElementById("close-login-btn");
+
+    // Mở Popup
+    if (btnLogin && loginModal) {
+        btnLogin.addEventListener("click", () => {
+            loginModal.classList.add("show");
+        });
+    }
+
+    // Đóng Popup khi bấm nút X
+    if (closeBtn && loginModal) {
+        closeBtn.addEventListener("click", () => {
+            loginModal.classList.remove("show");
+        });
+    }
+
+    // Đóng Popup khi click ra vùng nền đen bên ngoài
+    window.addEventListener("click", (event) => {
+        if (event.target === loginModal) {
+            loginModal.classList.remove("show");
+        }
+    });
+});
+
+// Logic gửi dữ liệu đăng nhập
+async function handleLoginPopup() {
+    const user = document.getElementById('admin-user-popup').value;
+    const pass = document.getElementById('admin-pass-popup').value;
+    const errorMsg = document.getElementById('login-error-popup');
+
+    const API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:3000" 
+    : "https://qrpro-luev.onrender.com";
+
+    errorMsg.style.display = 'none'; 
+    
+    if(!user || !pass) {
+        errorMsg.innerText = "Vui lòng nhập đủ tài khoản và mật khẩu!";
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/api/admin/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, password: pass })
+        });
+        
+        const data = await response.json();
+
+        if (data.success) {
+            // Lưu vé vào trình duyệt và chuyển trang
+            localStorage.setItem('admin_token', data.token);
+            window.location.href = "admin.html"; 
+        } else {
+            errorMsg.innerText = data.error || "Sai tài khoản hoặc mật khẩu!";
+            errorMsg.style.display = 'block';
+        }
+    } catch (error) {
+        errorMsg.innerText = "Lỗi kết nối máy chủ!";
+        errorMsg.style.display = 'block';
     }
 }

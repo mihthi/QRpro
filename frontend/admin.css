@@ -1,0 +1,22 @@
+/* Tắt hiển thị các thành phần khi không cần thiết */
+.hidden { 
+    display: none !important; 
+}
+
+/* Kiểu dáng cho Tab đang được chọn */
+.tab-active { 
+    border-bottom: 2px solid #10b981; 
+    color: #10b981; 
+    font-weight: bold; 
+}
+
+/* Kiểu dáng chung cho nút Tab */
+.tab-btn {
+    transition: all 0.3s ease;
+}
+
+/* Hiệu ứng khi hover vào các dòng trong bảng */
+.table-row-hover:hover {
+    background-color: #f9fafb;
+    transition: background-color 0.2s ease;
+}

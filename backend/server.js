@@ -255,6 +255,46 @@ app.get('/:shortCode', async (req, res) => {
     }
 });
 
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    // So sánh với thông tin trong két sắt .env
+    if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+        res.json({ success: true, token: process.env.ADMIN_TOKEN });
+    } else {
+        res.status(401).json({ error: "Sai tài khoản hoặc mật khẩu!" });
+    }
+});
+
+// Middleware: Người bảo vệ - Kiểm tra Token
+function verifyAdmin(req, res, next) {
+    const token = req.headers['authorization'];
+    if (token === `Bearer ${process.env.ADMIN_TOKEN}`) {
+        next();
+    } else {
+        res.status(403).json({ error: "Không có quyền truy cập!" });
+    }
+}
+
+// 2. API Lấy toàn bộ dữ liệu từ bảng links
+app.get('/api/admin/links', verifyAdmin, async (req, res) => {
+    const { data, error } = await supabase
+        .from('links')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true, data });
+});
+
+// 3. API Xóa 1 dữ liệu bất kỳ bằng ID
+app.delete('/api/admin/links/:id', verifyAdmin, async (req, res) => {
+    const linkId = req.params.id;
+    const { error } = await supabase.from('links').delete().eq('id', linkId);
+    
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ success: true });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Backend đang chạy tại: http://localhost:${PORT}`);
