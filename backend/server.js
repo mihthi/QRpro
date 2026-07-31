@@ -18,6 +18,17 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Cấu hình Multer lưu file tạm vào RAM trước khi đẩy lên Supabase
 const upload = multer({ storage: multer.memoryStorage() });
 
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+// Khởi tạo bộ kết nối với Amazon S3 bằng chìa khóa trong .env
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
+});
+
 // 2. Hàm tạo mã ngẫu nhiên (6 ký tự) - Giúp link trông xịn và đẹp hơn
 function generateShortCode(length = 6) {
     const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -29,50 +40,49 @@ function generateShortCode(length = 6) {
 }
 
 // 3. API 1: Xử lý yêu cầu RÚT GỌN LINK có hỗ trợ tên tùy chỉnh (Custom Alias)
-app.post('/api/shorten', async (req, res) => {
-    const { original_url, link_type = 'link', custom_alias } = req.body;
-
-    if (!original_url) {
-        return res.status(400).json({ error: 'Vui lòng cung cấp link gốc!' });
+// API 2: Xử lý Upload File (Hình ảnh / PDF) lên Amazon S3
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Vui lòng chọn file!' });
     }
 
     try {
-        let shortCode = "";
+        const file = req.file;
+        const fileName = `${Date.now()}_${file.originalname.replace(/\s/g, '_')}`;
+        const bucketName = process.env.AWS_BUCKET_NAME;
+        const region = process.env.AWS_REGION;
 
-        // Kiểm tra xem user có nhập tên link theo ý muốn không
-        if (custom_alias && custom_alias.trim() !== "") {
-            shortCode = custom_alias.trim();
+        // Bước A: Gửi file thẳng lên kho Amazon S3
+        const uploadParams = {
+            Bucket: bucketName,
+            Key: fileName,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+            ACL: 'public-read' // Cấp quyền Public để ai quét QR cũng xem được
+        };
 
-            // Check xem tên này đã có ai xài chưa
-            const { data: existingLink } = await supabase
-                .from('links')
-                .select('id')
-                .eq('short_code', shortCode)
-                .single();
+        await s3Client.send(new PutObjectCommand(uploadParams));
 
-            if (existingLink) {
-                return res.status(400).json({ error: 'Tên link này đã tồn tại, vui lòng chọn tên khác!' });
-            }
-        } else {
-            // Nếu không nhập, tự động sinh mã 6 ký tự
-            shortCode = generateShortCode();
-        }
+        // Bước B: Lấy đường link gốc chuẩn của Amazon S3
+        const originalUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${fileName}`;
 
-        // Lưu vào Database với 1 thao tác duy nhất
+        // Bước C: Rút gọn link của S3 bằng cơ sở dữ liệu Supabase
+        const shortCode = generateShortCode(); 
         const { error: insertError } = await supabase
             .from('links')
-            .insert([{ original_url, short_code: shortCode, link_type }]);
+            .insert([{ original_url: originalUrl, short_code: shortCode, link_type: 'file' }]);
 
         if (insertError) throw insertError;
 
-        const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+        const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
         const shortUrl = `${BASE_URL}/${shortCode}`;
 
-        res.json({ success: true, short_url: shortUrl, short_code: shortCode });
+        // Trả kết quả về cho giao diện vẽ mã QR
+        res.json({ success: true, short_url: shortUrl, short_code: shortCode, original_url: originalUrl });
 
     } catch (error) {
-        console.error("Lỗi hệ thống shorten:", error);
-        res.status(500).json({ error: 'Lỗi máy chủ khi tạo link!' });
+        console.error("Lỗi khi tải file lên S3:", error);
+        res.status(500).json({ error: 'Lỗi khi đẩy file lên kho chứa Amazon!' });
     }
 });
 
