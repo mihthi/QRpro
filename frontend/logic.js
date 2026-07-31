@@ -170,3 +170,69 @@ async function searchLocation() {
         alert("Không tìm thấy địa chỉ này trên bản đồ. Bạn có thể tự click chọn trên bản đồ nhé!");
     }
 }
+// --- 5. TÍNH NĂNG GỢI Ý TỰ ĐỘNG ĐỊA ĐIỂM ---
+const locationInput = document.getElementById('qr-input-location');
+const suggestionBox = document.getElementById('location-suggestions');
+let debounceTimer;
+
+if (locationInput && suggestionBox) {
+    // Bắt sự kiện mỗi khi người dùng gõ phím
+    locationInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer); // Xóa bộ đếm cũ
+        const query = this.value.trim();
+
+        // Nếu gõ ít hơn 3 ký tự thì giấu hộp gợi ý đi
+        if (query.length < 3) {
+            suggestionBox.style.display = 'none';
+            return;
+        }
+
+        // Đợi 0.6s sau khi ngừng gõ mới gọi API tìm kiếm
+        debounceTimer = setTimeout(async () => {
+            try {
+                // Gọi API lấy 5 kết quả sát nhất
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`);
+                const data = await response.json();
+
+                suggestionBox.innerHTML = ''; // Xóa kết quả cũ
+
+                if (data.length > 0) {
+                    // Tạo danh sách hiển thị
+                    data.forEach(place => {
+                        const item = document.createElement('div');
+                        item.className = 'suggestion-item';
+                        item.innerText = place.display_name; // Tên địa chỉ chi tiết
+                        
+                        // Xử lý khi click chọn 1 địa chỉ trong danh sách gợi ý
+                        item.addEventListener('click', () => {
+                            locationInput.value = place.display_name; // Điền vào ô input
+                            suggestionBox.style.display = 'none'; // Giấu hộp gợi ý
+                            
+                            // Tự động di chuyển bản đồ đến điểm đó luôn
+                            const lat = place.lat;
+                            const lon = place.lon;
+                            map.setView([lat, lon], 16);
+                            marker.setLatLng([lat, lon]);
+                            selectedLat = lat;
+                            selectedLng = lon;
+                        });
+
+                        suggestionBox.appendChild(item);
+                    });
+                    suggestionBox.style.display = 'block'; // Hiện hộp gợi ý
+                } else {
+                    suggestionBox.style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Lỗi tìm địa chỉ gợi ý:", error);
+            }
+        }, 600); // 600 mili-giây
+    });
+
+    // Ẩn danh sách gợi ý khi người dùng click chuột ra ngoài vùng input
+    document.addEventListener('click', function(e) {
+        if (e.target !== locationInput && e.target !== suggestionBox) {
+            suggestionBox.style.display = 'none';
+        }
+    });
+}

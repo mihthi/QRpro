@@ -131,10 +131,16 @@
                         <div class="location-input-side">
                             <div class="input-group">
                                 <label>Nhập địa chỉ để tìm kiếm:</label>
-                                <div style="display: flex; gap: 5px;">
-                                    <input type="text" id="qr-input-location"
-                                        placeholder="Ví dụ: Dinh Độc Lập, Quận 1...">
-                                    <button class="btn-search-map" onclick="searchLocation()" type="button">Tìm</button>
+                                <!-- THÊM TÍNH NĂNG GỢI Ý VÀO ĐÚNG CHỖ NÀY -->
+                                <div style="position: relative;">
+                                    <div style="display: flex; gap: 5px;">
+                                        <input type="text" id="qr-input-location"
+                                            placeholder="Ví dụ: Dinh Độc Lập, Quận 1...">
+                                        <button class="btn-search-map" onclick="searchLocation()"
+                                            type="button">Tìm</button>
+                                    </div>
+                                    <!-- HỘP CHỨA KẾT QUẢ GỢI Ý ĐỊA ĐIỂM -->
+                                    <div id="location-suggestions" class="suggestions-box" style="display: none;"></div>
                                 </div>
                             </div>
                             <p style="font-size: 13px; color: #666; margin-top: 10px;">
