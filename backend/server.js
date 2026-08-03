@@ -299,3 +299,49 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Backend đang chạy tại: http://localhost:${PORT}`);
 });
+// =======================================================
+// API ẨN: TỰ ĐỘNG DỌN RÁC (Được gọi bởi cron-job.org)
+// =======================================================
+app.get('/api/admin/cron-cleanup', async (req, res) => {
+    // 1. Kiểm tra chìa khóa bảo mật (Ngăn chặn người ngoài gọi bậy bạ)
+    const secretKey = req.query.key;
+    if (secretKey !== process.env.ADMIN_TOKEN) {
+        return res.status(403).json({ error: "Từ chối truy cập! Sai chìa khóa." });
+    }
+
+    try {
+        const today = new Date();
+        let deletedCount = 0;
+
+        // ĐIỀU KIỆN 1: Xóa link quá 7 ngày mà không có ai click
+        const sevenDaysAgo = new Date(today.getTime() - (7 * 24 * 60 * 60 * 1000)).toISOString();
+        const { data: data1, error: err1 } = await supabase
+            .from('links')
+            .delete()
+            .or('click_count.eq.0,click_count.is.null') 
+            .lt('created_at', sevenDaysAgo)
+            .select(); // Lấy ra danh sách đã xóa để đếm
+
+        if (!err1 && data1) deletedCount += data1.length;
+
+        // ĐIỀU KIỆN 2: Xóa link ngủ đông quá 90 ngày
+        const ninetyDaysAgo = new Date(today.getTime() - (90 * 24 * 60 * 60 * 1000)).toISOString();
+        const { data: data2, error: err2 } = await supabase
+            .from('links')
+            .delete()
+            .lt('last_accessed_at', ninetyDaysAgo)
+            .select();
+
+        if (!err2 && data2) deletedCount += data2.length;
+
+        // Trả kết quả về cho hệ thống cron-job
+        res.json({ 
+            success: true, 
+            message: `Hoàn tất! Đã dọn dẹp tổng cộng ${deletedCount} link rác.` 
+        });
+
+    } catch (error) {
+        console.error("Lỗi dọn rác:", error);
+        res.status(500).json({ error: "Lỗi máy chủ khi dọn dẹp" });
+    }
+});

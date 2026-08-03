@@ -40,9 +40,11 @@ async function loginAdmin() {
 }
 
 function logoutAdmin() {
+    // localStorage.removeItem('admin_token');
+    // document.getElementById('dashboard-screen').classList.add('hidden');
+    // document.getElementById('login-screen').classList.remove('hidden');
     localStorage.removeItem('admin_token');
-    document.getElementById('dashboard-screen').classList.add('hidden');
-    document.getElementById('login-screen').classList.remove('hidden');
+    window.location.href = 'index.html';
 }
 
 function showDashboard() {
