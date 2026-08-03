@@ -295,10 +295,6 @@ app.delete('/api/admin/links/:id', verifyAdmin, async (req, res) => {
     res.json({ success: true });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Backend đang chạy tại: http://localhost:${PORT}`);
-});
 // =======================================================
 // API ẨN: TỰ ĐỘNG DỌN RÁC (Được gọi bởi cron-job.org)
 // =======================================================
@@ -345,3 +341,4 @@ app.get('/api/admin/cron-cleanup', async (req, res) => {
         res.status(500).json({ error: "Lỗi máy chủ khi dọn dẹp" });
     }
 });
+
