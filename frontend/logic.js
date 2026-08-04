@@ -26,7 +26,7 @@ async function generateShortLink() {
     // --- XỬ LÝ UPLOAD FILE THẬT ---
     document.getElementById('result-box').style.display = 'block';
     document.getElementById('result-title').innerText = "⏳ Đang xử lý..."; // Đổi tiêu đề thành Đang xử lý
-    document.getElementById('result-text').innerText = "Đang tải file lên máy chủ (Vui lòng chờ)...";
+    document.getElementById('result-text').innerText = "Đang tạo link rút gọn...";
     try {
         const response = await fetch(`${API_URL}/api/shorten`, {
             method: 'POST',
