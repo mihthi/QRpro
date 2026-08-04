@@ -1,8 +1,10 @@
 // Đổi URL này thành URL Backend của bạn
+// const API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+//     ? "http://localhost:3000" 
+//     : "https://qrpro-luev.onrender.com";
 const API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? "http://localhost:3000" 
-    : "https://qrpro-luev.onrender.com";
-
+    : " https://www.hongthang.cloud";
 // Kiểm tra khi vừa vào trang
 window.onload = () => {
     const token = localStorage.getItem('admin_token');

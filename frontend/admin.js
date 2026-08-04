@@ -1,7 +1,12 @@
 // Đổi URL này thành URL Backend của bạn (Ví dụ: https://qrpro-luev.onrender.com)
+// const API_URL = window.location.hostname === "localhost" 
+//     ? "http://localhost:3000" 
+//     : "https://qrpro-luev.onrender.com"; 
 const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" 
-    : "https://qrpro-luev.onrender.com"; 
+    : "https://www.hongthang.cloud"; 
+
+    
 
 let allData = []; 
 let currentTab = 'link'; 

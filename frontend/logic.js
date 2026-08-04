@@ -1,6 +1,7 @@
 // --- FILE: logic.js (XỬ LÝ THUẬT TOÁN & DATA) ---
 
-const API_URL = "https://qrpro-luev.onrender.com"; // Đổi thành URL thật của backend
+// const API_URL = "https://qrpro-luev.onrender.com"; // Đổi thành URL thật của backend
+const API_URL = "https://www.hongthang.cloud"
 //const API_URL = "http://localhost:3000";
 // 1. Khởi tạo FingerprintJS
 let deviceFingerprint = "";
