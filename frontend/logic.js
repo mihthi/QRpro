@@ -41,10 +41,12 @@ async function generateShortLink() {
         });
 
         const data = await response.json();
-
         if (data.success) {
-            const finalLink = data.short_url; 
-            showResult(`🎉 Thành công! Link rút gọn của bạn:<br><br> <a href="${finalLink}" target="_blank" style="font-size: 20px;">${finalLink}</a>`, "");
+            const finalLink = data.short_url;
+            // Cắt bỏ phần https://www. hoặc http://www. hoặc https:// để chữ hiển thị đẹp hơn
+            const displayLink = finalLink.replace(/^https?:\/\/(www\.)?/, ""); 
+            
+            showResult(`🎉 Thành công! Link rút gọn của bạn:<br><br> <a href="${finalLink}" target="_blank" style="font-size: 20px; text-decoration: none; font-weight: bold;">${displayLink}</a>`, "");
         } else {
             alert("Lỗi từ máy chủ: " + data.error);
             document.getElementById('result-box').style.display = 'none';
