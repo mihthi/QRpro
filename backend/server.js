@@ -345,6 +345,10 @@ app.get('/api/admin/cron-cleanup', async (req, res) => {
         res.status(500).json({ error: "Lỗi máy chủ khi dọn dẹp" });
     }
 });
+app.get('/ping-server', (req, res) => {
+    res.send('OK');
+});
+
 // =======================================================
 // BẬT MÁY CHỦ LẮNG NGHE TẠI CỔNG
 // =======================================================
