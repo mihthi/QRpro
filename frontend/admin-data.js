@@ -79,7 +79,8 @@ function toggleSelect(id) {
 // Bật/tắt nút "Chọn tất cả"
 function toggleSelectAll(checkbox) {
     if (checkbox.checked) {
-        selectedIds = currentFilteredData.map(item => item.id); // Lấy hết ID đang hiển thị
+        // Đổi item.id thành String(item.id)
+        selectedIds = currentFilteredData.map(item => String(item.id)); 
     } else {
         selectedIds = [];
     }
@@ -152,6 +153,7 @@ function renderTable() {
         if (sortOrder === 'newest') return new Date(b.created_at) - new Date(a.created_at);
         if (sortOrder === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
         if (sortOrder === 'clicks_desc') return (b.click_count || 0) - (a.click_count || 0);
+        if (sortOrder === 'clicks_asc') return (a.click_count || 0) - (b.click_count || 0);
         return 0;
     });
 
@@ -159,10 +161,11 @@ function renderTable() {
 
     // Vẽ từng dòng
     currentFilteredData.forEach(item => {
-        let displayUrl = item.original_url;
+       let displayUrl = item.original_url;
         if (displayUrl.length > 50) displayUrl = displayUrl.substring(0, 50) + '...';
 
-        const isSelected = selectedIds.includes(item.id);
+        // Đổi item.id thành String(item.id)
+        const isSelected = selectedIds.includes(String(item.id));
         const tr = document.createElement('tr');
         
         // NẾU ĐƯỢC CHỌN: In đậm (font-bold) và tô màu nền (bg-green-50). Click vào đâu trên dòng cũng được.
