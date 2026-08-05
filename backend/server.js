@@ -277,10 +277,6 @@ function verifyAdmin(req, res, next) {
 
 // 2. API Lấy toàn bộ dữ liệu từ bảng links
 app.get('/api/admin/links', verifyAdmin, async (req, res) => {
-    const secretKey = req.query.key;
-    if (secretKey !== 'gjcungdc') {
-        return res.status(403).json({ success: false, message: 'Sai mã bảo vệ!' });
-    }
     const { data, error } = await supabase
         .from('links')
         .select('*')

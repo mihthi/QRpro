@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <!-- Liên kết tới file CSS riêng của Admin -->
     <link rel="stylesheet" href="admin.css">
 </head>
+
 <body class="bg-gray-100 font-sans">
 
     <!-- MÀN HÌNH ĐĂNG NHẬP -->
@@ -16,9 +18,13 @@
         <div class="bg-white p-8 rounded-xl shadow-lg w-96">
             <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Đăng Nhập Admin</h2>
             <div class="space-y-4">
-                <input type="text" id="admin-user" placeholder="Tài khoản" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                <input type="password" id="admin-pass" placeholder="Mật khẩu" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                <button onclick="loginAdmin()" class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600 transition">Đăng Nhập</button>
+                <input type="text" id="admin-user" placeholder="Tài khoản"
+                    class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <input type="password" id="admin-pass" placeholder="Mật khẩu"
+                    class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <button onclick="loginAdmin()"
+                    class="w-full bg-green-500 text-white font-bold p-3 rounded-lg hover:bg-green-600 transition">Đăng
+                    Nhập</button>
             </div>
             <p id="login-error" class="text-red-500 text-sm mt-3 text-center hidden"></p>
         </div>
@@ -29,15 +35,44 @@
         <!-- Header -->
         <header class="bg-white shadow-sm p-4 flex justify-between items-center">
             <h1 class="text-xl font-bold text-gray-800">⚙️ Quản Trị Hệ Thống</h1>
-            <button onclick="logoutAdmin()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition">Đăng xuất</button>
+            <button onclick="logoutAdmin()"
+                class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition">Đăng
+                xuất</button>
         </header>
 
         <!-- Main Content -->
         <main class="p-6 max-w-6xl mx-auto">
             <!-- Tabs -->
             <div class="flex border-b mb-6">
-                <button onclick="switchTab('link')" id="tab-link" class="tab-btn tab-active px-6 py-3 text-gray-600 hover:text-green-500 focus:outline-none">🔗 Link Rút Gọn</button>
-                <button onclick="switchTab('album')" id="tab-album" class="tab-btn px-6 py-3 text-gray-600 hover:text-green-500 focus:outline-none">📂 Quản Lý File/Album</button>
+                <button onclick="switchTab('link')" id="tab-link"
+                    class="tab-btn tab-active px-6 py-3 text-gray-600 hover:text-green-500 focus:outline-none">🔗 Link
+                    Rút Gọn</button>
+                <button onclick="switchTab('album')" id="tab-album"
+                    class="tab-btn px-6 py-3 text-gray-600 hover:text-green-500 focus:outline-none">📂 Quản Lý
+                    File/Album</button>
+            </div>
+
+            <!-- Thanh Tìm kiếm, Sắp xếp và NÚT XÓA HÀNG LOẠT -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                <div class="flex w-full md:w-auto gap-2">
+                    <!-- Nút Xóa hàng loạt (Mặc định ẩn) -->
+                    <button id="bulk-delete-btn" onclick="deleteSelectedItems()"
+                        class="hidden bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-bold shadow transition-all whitespace-nowrap">🗑️
+                        Xóa (0)</button>
+                </div>
+
+                <!-- Ô Tìm kiếm -->
+                <input type="text" id="search-input" oninput="handleSearch()"
+                    placeholder="🔍 Tìm kiếm mã ngắn hoặc nội dung URL..."
+                    class="w-full md:w-1/2 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+
+                <!-- Bộ lọc sắp xếp -->
+                <select id="sort-select" onchange="handleSort()"
+                    class="w-full md:w-auto p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-gray-700">
+                    <option value="newest">Mới nhất (Trên xuống dưới)</option>
+                    <option value="oldest">Cũ nhất (Dưới lên trên)</option>
+                    <option value="clicks_desc">Lượt Click (Nhiều nhất)</option>
+                </select>
             </div>
 
             <!-- Table -->
@@ -45,6 +80,11 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-gray-700 border-b">
+                            <!-- THÊM CHECKBOX CHỌN TẤT CẢ -->
+                            <th class="p-4 font-semibold w-12 text-center">
+                                <input type="checkbox" id="select-all-cb" onclick="toggleSelectAll(this)"
+                                    class="w-4 h-4 cursor-pointer">
+                            </th>
                             <th class="p-4 font-semibold">Mã ngắn</th>
                             <th class="p-4 font-semibold">Dữ liệu gốc (URL/Files)</th>
                             <th class="p-4 font-semibold">Loại</th>
@@ -65,4 +105,5 @@
     <script src="admin-auth.js"></script>
     <script src="admin-data.js"></script>git
 </body>
+
 </html>
